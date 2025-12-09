@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "https://www.schemastore.org/yamllint.json": "file:///c%3A/projects/kube-dev-sandbox/infra/k8s/prometheus.yaml"
+  }
+}

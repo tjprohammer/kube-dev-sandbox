@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: sandbox-app
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: sandbox-app
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.1.0
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana-admin
+                  key: password
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: dashboards
+              mountPath: /etc/grafana/provisioning/dashboards
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+            - name: dashboard-files
+              mountPath: /var/lib/grafana/dashboards
+      volumes:
+        - name: dashboards
+          configMap:
+            name: grafana-dashboard-provisioning
+        - name: datasources
+          configMap:
+            name: grafana-datasources
+        - name: dashboard-files
+          configMap:
+            name: grafana-dashboard-traffic
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-admin
+  namespace: sandbox-app
+stringData:
+  password: dev-password
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: sandbox-app
+  labels:
+    grafana_datasource: "1"
+data:
+  datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.sandbox-app.svc.cluster.local
+        isDefault: true
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provisioning
+  namespace: sandbox-app
+  labels:
+    grafana_dashboard: "1"
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: sandbox-dashboards
+        folder: Sandbox
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-traffic
+  namespace: sandbox-app
+  labels:
+    grafana_dashboard: "1"
+data:
+  traffic.json: |
+    {
+      "id": null,
+      "title": "Sandbox Traffic",
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "10s",
+      "panels": [
+        {
+          "type": "graph",
+          "title": "API Requests",
+          "targets": [
+            {
+              "expr": "sum(rate(api_requests_total[1m])) by (endpoint)",
+              "legendFormat": "{{endpoint}}",
+              "interval": ""
+            }
+          ],
+          "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8}
+        },
+        {
+          "type": "graph",
+          "title": "Notifications Sent",
+          "targets": [
+            {
+              "expr": "sum(rate(notifications_sent_total[1m])) by (channel)",
+              "legendFormat": "{{channel}}",
+              "interval": ""
+            }
+          ],
+          "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8}
+        }
+      ]
+    }

@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: worker
+  namespace: sandbox-app
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: worker
+              image: ghcr.io/example/kube-dev-sandbox/worker:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: JOB_NAME
+                  value: sandbox-worker

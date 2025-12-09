@@ -1,0 +1,12 @@
+alertmanager:
+  enabled: false
+server:
+  retention: 7d
+  persistentVolume:
+    enabled: false
+scrapeConfigs:
+  - job_name: sandbox-services
+    static_configs:
+      - targets:
+          - api.sandbox-app.svc.cluster.local:8000
+          - notifications.sandbox-app.svc.cluster.local:8100

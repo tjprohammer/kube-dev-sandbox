@@ -1,0 +1,40 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        env:
+            PYTHON: python3
+        steps:
+            - name: Checkout repository
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  rm -rf repo
+                  git clone https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }} repo
+                  rsync -a repo/ ./
+            - name: Verify Python toolchain
+              run: |
+                  $PYTHON --version
+                  $PYTHON -m pip install --upgrade pip
+            - name: Install service dependencies
+              run: |
+                  $PYTHON -m pip install -r services/api/requirements.txt
+                  $PYTHON -m pip install -r services/notifications/requirements.txt
+                  $PYTHON -m pip install pyyaml
+            - name: Static checks
+              run: |
+                  $PYTHON -m compileall services/api services/notifications services/worker
+                  $PYTHON .github/scripts/validate_manifests.py
+            - name: Docker build validation
+              run: |
+                  docker build services/api --tag api:test
+                  docker build services/notifications --tag notifications:test
+                  docker build services/frontend --tag frontend:test
+                  docker build services/worker --tag worker:test
