@@ -1,5 +1,7 @@
 # Kube Dev Sandbox
 
+[![CI](https://github.com/tjprohammer/kube-dev-sandbox/actions/workflows/ci.yml/badge.svg)](https://github.com/tjprohammer/kube-dev-sandbox/actions/workflows/ci.yml)
+
 A local Kubernetes sandbox to learn **Kubernetes**, **containers**, **CI/CD**, **security**, and **monitoring** by building a small but realistic multi-service application.
 
 Everything runs **locally** using:
@@ -248,27 +250,35 @@ Grafana credentials live in `infra/k8s/grafana.yaml` (`admin` / `dev-password`).
 
 Because `/metrics` is exposed on the same pods/ports as the application traffic, the Prometheus deployment simply scrapes the ClusterIP services (`api` and `notifications`), so new services only need FastAPI instrumentation + an entry in `infra/k8s/prometheus.yaml` to appear automatically.
 
-### Jenkins CI/CD quickstart
+### GitHub Actions CI/CD
 
-Spin up a local Jenkins master (or point to an existing one) to turn the sandbox into a push-button CI/CD exercise:
+The workflow in `.github/workflows/ci.yml` replaces the old Jenkins job and runs in three phases every time you push to `main`, open a pull request, or trigger it manually from the **Actions** tab:
 
-1. **Run Jenkins** – The quickest option is Docker:
-  ```powershell
-  docker run -d --name jenkins --restart=unless-stopped -p 8080:8080 -p 50000:50000 \
-    -v jenkins-home:/var/jenkins_home jenkins/jenkins:lts-jdk17
-  ```
-  Install the recommended plugins plus `Docker` and `Pipeline` if they are not already present. Ensure the agent that executes the job has `docker`, `kubectl`, `make`, and `git` available on its `$PATH`.
-2. **Create credentials** – The Jenkinsfile expects two IDs:
-  - `sandbox-registry-creds` → *Username with password* storing your registry login. For GHCR use your GitHub username and a PAT with `write:packages` + `read:packages` scopes.
-  - `sandbox-kubeconfig` → *Secret file* that contains a kubeconfig with access to the cluster you plan to deploy to (optional if you leave `DEPLOY_TO_CLUSTER=false`).
-3. **Create a Pipeline job** – Point it at this repository and keep the Script Path as `Jenkinsfile`. Multibranch works as well if you want every branch to run automatically.
-4. **Supply parameters at build time**:
-  - `REGISTRY_PREFIX` should include the registry host *and* namespace (e.g., `ghcr.io/your-gh-username`). The Makefile automatically appends `api-service` / `notifications-service`.
-  - `IMAGE_TAG` defaults to the current commit SHA when left empty.
-  - `DEPLOY_TO_CLUSTER` controls whether the job applies manifests + rollouts using the provided kubeconfig.
-5. **Pipeline stages** – Lint the FastAPI services inside a disposable `python:3.12-slim` container, build images via `make build`, authenticate to the registry once, push both images, and (optionally) call `make apply-*` + `kubectl rollout status` to update the cluster using the freshly pushed tag.
+1. **Lint & Tests** – Installs the Python dependencies, runs `compileall` for both services, and validates every Kubernetes manifest with `.github/scripts/validate_manifests.py`.
+2. **Build & Push Images** – Calls `make build REGISTRY=<prefix> IMAGE_TAG=<tag>` on every run. Images are pushed via `make push` automatically when the event is a push to `main` or when you set the `push_images` input to `true` during a manual dispatch.
+3. **Optional Deploy** – When the workflow is started manually with `deploy_to_cluster=true`, the job writes your kubeconfig secret, reapplies the manifests (`make apply-*`), and waits for the `api` + `notifications` rollouts to finish.
 
-The Jenkins logs will show the computed tag and registry path (`ghcr.io/<you>/api-service:<tag>`). Because the pipeline relies on the existing Makefile targets, any future services that participate in `make build`/`make push` are included automatically—just update the Makefile and Jenkins inherits the change.
+Configuration checklist:
+
+- **Repository variable** `REGISTRY_PREFIX` (Settings → Variables → Actions) pointing at your namespace, e.g. `ghcr.io/your-gh-username`. If you skip it, the workflow falls back to `ghcr.io/<repo-owner>`.
+- **Secrets**
+  - `REGISTRY_USERNAME` and `REGISTRY_TOKEN` – credentials with rights to push to the registry (PAT with `write:packages` for GHCR works well).
+  - `SANDBOX_KUBECONFIG_B64` – base64-encoded kubeconfig used only when `deploy_to_cluster=true`.
+
+Manual runs expose the following overrides:
+
+- `registry_prefix` – override the repo variable for one run.
+- `image_tag` – defaults to the short commit SHA when empty.
+- `push_images` – `true/false` toggle for publishing images (handy for dry runs).
+- `deploy_to_cluster` – when `true`, the deploy job runs with the latest tag.
+
+Because the workflow shells out to the Makefile targets, adding a new service or deployment step remains a Makefile change—Actions will pick it up automatically.
+
+Quick confidence check for new contributors:
+
+1. Make a tiny change (for example, edit this README) on a feature branch and open a PR into `main` – the workflow runs automatically on the branch push and the PR.
+2. Merge to `main` and watch the badge at the top of this README flip green once the `Build (and optionally push) images` job succeeds.
+3. Trigger the workflow manually with `deploy_to_cluster=true` only when you want CI to push straight to the cluster using `SANDBOX_KUBECONFIG_B64`.
 
 To make the sandbox mirror a production-ready startup environment, these additions are queued up:
 
