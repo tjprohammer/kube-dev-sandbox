@@ -20,3 +20,17 @@ spec:
       allowedRoutes:
         namespaces:
           from: Same
+    - name: http-frontend
+      port: 80
+      protocol: HTTP
+      hostname: ui.sandbox.local
+      allowedRoutes:
+        namespaces:
+          from: Same
+    - name: http-photo-api
+      port: 80
+      protocol: HTTP
+      hostname: api.photo.local
+      allowedRoutes:
+        namespaces:
+          from: Same

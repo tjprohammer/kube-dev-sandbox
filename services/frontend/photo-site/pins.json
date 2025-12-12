@@ -1,0 +1,290 @@
+[
+  {
+    "id": "50d77d28-613b-414a-a9a5-5857fa1cceb9",
+    "title": "test",
+    "description": "test",
+    "category": "coastal",
+    "featured": false,
+    "coordinates": {
+      "latitude": 45.36446618117637,
+      "longitude": -122.37564641373896
+    },
+    "trips": [
+      {
+        "id": "trip_1759857989739",
+        "title": "test",
+        "visitDate": "2025-10-07",
+        "story": "test",
+        "tags": [],
+        "photos": [
+          {
+            "id": "s3-1759857983396-0",
+            "title": "CosmicWonders_Final",
+            "description": "Photo from test",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759857983396_0_CosmicWonders_Final.JPG",
+            "thumbnail": "",
+            "alt": "CosmicWonders_Final.JPG",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1759857983397-1",
+            "title": "CottonCandy",
+            "description": "Photo from test",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759857983397_1_CottonCandy.jpg",
+            "thumbnail": "",
+            "alt": "CottonCandy.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1759857983397-2",
+            "title": "DappledAutumn",
+            "description": "Photo from test",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759857983397_2_DappledAutumn.jpg",
+            "thumbnail": "",
+            "alt": "DappledAutumn.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1759857983397-3",
+            "title": "DeadLands",
+            "description": "Photo from test",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759857983397_3_DeadLands.jpg",
+            "thumbnail": "",
+            "alt": "DeadLands.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          }
+        ]
+      }
+    ],
+    "createdAt": "2025-10-07T17:26:30.18150674Z",
+    "updatedAt": "2025-10-07T17:26:30.181506898Z"
+  },
+  {
+    "id": "14323ab2-43db-4b2d-ada7-8fb422de056a",
+    "title": "test",
+    "description": "test",
+    "category": "forest",
+    "featured": false,
+    "coordinates": {
+      "latitude": 47.80989589780492,
+      "longitude": -123.68931960028891
+    },
+    "trips": [
+      {
+        "id": "trip_1759859960534",
+        "title": "test",
+        "visitDate": "2025-10-07",
+        "story": "test",
+        "tags": [],
+        "photos": [
+          {
+            "id": "s3-1759860787520-0",
+            "title": "Three Brothers",
+            "description": "Photo from test",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759860787520_0_Three_Brothers.jpg",
+            "thumbnail": "",
+            "alt": "Three Brothers.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          }
+        ]
+      }
+    ],
+    "createdAt": "2025-10-07T17:59:20.890605775Z",
+    "updatedAt": "2025-10-07T18:13:12.156726595Z"
+  },
+  {
+    "id": "ac690d8d-413b-4dee-9c97-ae68c9779659",
+    "title": "test mt adams",
+    "description": "test",
+    "category": "mountains",
+    "featured": false,
+    "coordinates": {
+      "latitude": 46.19327183999977,
+      "longitude": -121.47790488322242
+    },
+    "trips": [
+      {
+        "id": "trip_1759860253863",
+        "title": "test mt adams",
+        "visitDate": "2025-10-07",
+        "story": "test",
+        "tags": [],
+        "photos": [
+          {
+            "id": "s3-1759860728091-0",
+            "title": "Altitude",
+            "description": "Photo from test mt adams",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759860728091_0_Altitude.jpg",
+            "thumbnail": "",
+            "alt": "Altitude.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1759860729053-1",
+            "title": "Apocalyptic",
+            "description": "Photo from test mt adams",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759860729053_1_Apocalyptic.jpg",
+            "thumbnail": "",
+            "alt": "Apocalyptic.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1759860729591-2",
+            "title": "CalmStorm",
+            "description": "Photo from test mt adams",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1759860729591_2_CalmStorm.jpg",
+            "thumbnail": "",
+            "alt": "CalmStorm.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          }
+        ]
+      }
+    ],
+    "createdAt": "2025-10-07T18:04:14.191613723Z",
+    "updatedAt": "2025-10-07T18:12:22.058182896Z"
+  },
+  {
+    "id": "a0c67440-8004-4b9d-99b3-12618c1643d3",
+    "title": "MT Hood Oregon",
+    "description": "Rising majestically to 11,240 feet, Mount Hood, located at coordinates 45.358603, -121.736064, is a stunning stratovolcano that commands the skyline of Oregon’s Cascade Range. With its glacier-capped summit and lush, forested slopes teeming with wildflowers, this iconic peak offers an ever-changing palette of colors and textures, a photographer’s dream come true. As the sun dips behind the mountain, casting golden hues across the tranquil waters of nearby Trillium Lake, the scene transforms into a breathtaking canvas that beckons adventurers to capture nature's artistry at every turn.",
+    "category": "mountains",
+    "featured": false,
+    "coordinates": {
+      "latitude": 45.35860343049072,
+      "longitude": -121.73606395721069
+    },
+    "trips": [
+      {
+        "id": "trip_1760034292182",
+        "title": "MT Hood Oregon",
+        "visitDate": "2025-10-09",
+        "story": "As dawn broke over Mount Hood, the first rays of sunlight poured over the rugged peaks, illuminating the glistening snowfields that cling to its summit. The air was crisp and invigorating, a fragrant blend of pine and fresh earth that signaled the onset of spring. From the moment the photographer stepped out of the car at the coordinates 45.358603, -121.736064, they were captivated by the majesty of this dormant stratovolcano, which rises to an impressive 11,240 feet, making it the highest point in Oregon. The mountain's rugged terrain tells the tale of volcanic eruptions and glacial movements, with its iconic silhouette standing sentinel over the lush forests and alpine meadows below.\n\nAs the day unfolded, the photographer wandered through vibrant fields adorned with wildflowers, their colors bursting forth in a riot of reds, yellows, and purples. Each step revealed a new perspective, a new composition, as the shadows danced across the landscape. The photographer noted the diversity of Mt. Hood, a living canvas that transformed with the seasons—from the bright blooms of spring flowers to the golden hues of autumn foliage. Here, they found solace not just in the beauty surrounding them but in the challenge of capturing its essence through the lens. The ease of access from the nearby parking lot allowed for a quick escape into nature, making it all the more enticing to explore the trails that meandered through the ancient forests.\n\nAs the sun began to dip behind the mountain, casting a golden glow over the terrain, the photographer prepared for a different kind of beauty—the night sky. With a blanket spread out on a quiet ridge, they watched as stars began to twinkle into existence, painting the dark canvas above with shimmering diamonds. The serenity of the moment was profound; the only sounds were the soft rustle of leaves and the distant calls of nocturnal creatures. It was in this stillness, under the vast expanse of the cosmos, that the photographer felt an overwhelming connection to the land, a reminder of the delicate balance between humanity and nature.\n\nReflecting on their visit, the photographer realized that Mt. Hood is not just a mountain; it is a testament to the power of nature’s beauty. Each season brings its unique charm, yet the true magic lies in the moments spent in quiet appreciation. As they packed up their gear and prepared to leave, a gentle breeze whispered through the trees, carrying with it the promise of future adventures and the enduring spirit of",
+        "tags": [],
+        "photos": [
+          {
+            "id": "s3-1760033809247-0",
+            "title": "CosmicWonders_Final",
+            "description": "Photo from MT Hood Oregon",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1760033809247_0_CosmicWonders_Final.JPG",
+            "thumbnail": "",
+            "alt": "CosmicWonders_Final.JPG",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1760033809247-1",
+            "title": "EarlyAutumn",
+            "description": "Photo from MT Hood Oregon",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1760033809247_1_EarlyAutumn.jpg",
+            "thumbnail": "",
+            "alt": "EarlyAutumn.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1760033809247-2",
+            "title": "LostPeak",
+            "description": "Photo from MT Hood Oregon",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1760033809247_2_LostPeak.jpg",
+            "thumbnail": "",
+            "alt": "LostPeak.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          },
+          {
+            "id": "s3-1760033809247-3",
+            "title": "MountainBloom",
+            "description": "Photo from MT Hood Oregon",
+            "src": "https://d2pwhdqiz6vt1n.cloudfront.net/temp-uploads/1760033809247_3_MountainBloom.jpg",
+            "thumbnail": "",
+            "alt": "MountainBloom.jpg",
+            "uploadDate": "",
+            "metadata": {
+              "camera": "",
+              "lens": "",
+              "settings": "",
+              "fileSize": "",
+              "dimensions": ""
+            }
+          }
+        ]
+      }
+    ],
+    "createdAt": "2025-10-09T18:24:53.178394943Z",
+    "updatedAt": "2025-10-09T18:24:53.178395032Z"
+  }
+]

@@ -1,0 +1,50 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  font-family: Roboto;
+  letter-spacing: 0.15rem;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+/* In your global CSS file */
+.carousel-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.carousel-container::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Replace with your theme track color */
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+  background: #888; /* Replace with your theme thumb color */
+  &:hover {
+    background: #3f0505; /* Replace with your theme thumb hover color */
+  }
+}
+
+/* For Firefox */
+.carousel-container {
+  scrollbar-width: thin;
+  scrollbar-color: #390808 #451515; /* Thumb and track colors */
+}

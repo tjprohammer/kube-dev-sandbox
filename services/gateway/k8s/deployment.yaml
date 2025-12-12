@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-service
+  namespace: sandbox-app
+  labels:
+    app: gateway-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway-service
+  template:
+    metadata:
+      labels:
+        app: gateway-service
+    spec:
+      containers:
+        - name: gateway-service
+          image: ghcr.io/your-gh-username/gateway-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: LEGACY_BASE_URL
+              value: https://5cjnp8rcga.execute-api.us-west-2.amazonaws.com/staging_api
+            - name: LOCATIONS_BASE_URL
+              value: http://locations.sandbox-app.svc.cluster.local
+            - name: ALLOWED_ORIGINS
+              value: http://ui.sandbox.local,https://ui.sandbox.local,http://localhost:5173
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi

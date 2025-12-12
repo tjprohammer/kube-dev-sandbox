@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locations
+  namespace: sandbox-app
+  labels:
+    app: locations
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: locations
+  template:
+    metadata:
+      labels:
+        app: locations
+    spec:
+      containers:
+        - name: locations
+          image: ghcr.io/your-gh-username/locations-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: DATABASE_URL
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: REDIS_PASSWORD
+            - name: CACHE_TTL_SECONDS
+              value: "60"
+            - name: ALLOWED_ORIGINS
+              value: http://ui.sandbox.local,https://ui.sandbox.local,http://localhost:5173
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

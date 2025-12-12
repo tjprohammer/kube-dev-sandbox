@@ -25,13 +25,12 @@ The goal is to simulate a small production-style system and use it to practice:
 
 This sandbox models a small, cloud-native app with multiple services:
 
-- **`api`** – Backend API (Python / FastAPI)
-  - Endpoints like `/health`, `/stats`, `/notify`
-- **`notifications`** – Mock multi-channel notification service (FastAPI)
-  - Endpoints: `POST /send`, `GET /stats`, `GET /healthz`
-  - Routed through the Gateway at `notify.sandbox.local`
-- **`frontend`** – Simple web UI (static or React built + served via Nginx)
-- **(Later) `worker`** – Background / cron-like tasks (e.g. cleanup, scheduled jobs)
+- **`gateway-service`** – FastAPI shim that fronts every public API at `api.photo.local`. It proxies legacy Lambda endpoints today and can shift traffic to internal services feature-by-feature.
+- **`locations-service`** – Postgres-backed pins CRUD API with optional Redis caching. First migrated feature served via `/locations`.
+- **`api`** – Legacy FastAPI service with misc health/stats helpers.
+- **`notifications`** – Mock multi-channel notification service (FastAPI) routed through `notify.sandbox.local`.
+- **`frontend-web`** – React UI (Mapbox) built with Vite and served via Nginx inside the cluster.
+- **(Later) `worker`** – Background / cron-like tasks (cleanup, scheduled jobs).
 
 All services are:
 
@@ -39,11 +38,12 @@ All services are:
 - Deployed to a local **Kubernetes** cluster (minikube)
 - Grouped into a `sandbox-app` **namespace**
 - Exposed through the **Gateway API (Contour + Envoy)** with hostnames:
-  - `sandbox.local` → api service (FastAPI)
+  - `sandbox.local` → legacy FastAPI service
   - `notify.sandbox.local` → notifications service
-  - Additional hosts (e.g., `ui.sandbox.local`) will be added for frontend once available
+  - `ui.sandbox.local` → frontend web UI
+  - `api.photo.local` → consolidated API entrypoint (gateway-service → locations-service → legacy Lambdas)
 
-Cross-cutting concerns (config, secrets, RBAC, ingress, monitoring) live in the `infra` directory.
+Cross-cutting concerns (config, secrets, RBAC, ingress, persistence, monitoring) live in the `infra` directory (see `infra/k8s/db` for Postgres + Redis and `infra/k8s/secrets` for sample secret manifests).
 
 ---
 
@@ -168,15 +168,23 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
    kubectl apply -f services/api/k8s/service.yaml
    kubectl apply -f services/notifications/k8s/deployment.yaml
    kubectl apply -f services/notifications/k8s/service.yaml
+  kubectl apply -f services/frontend/k8s/deployment.yaml
+  kubectl apply -f services/frontend/k8s/service.yaml
+  kubectl apply -f services/gateway/k8s/deployment.yaml
+  kubectl apply -f services/gateway/k8s/service.yaml
+  kubectl apply -f services/locations/k8s/deployment.yaml
+  kubectl apply -f services/locations/k8s/service.yaml
    kubectl get pods -n sandbox-app
    ```
-   Ensure both `api` and `notifications` pods are `Running/Ready` (two replicas each).
+  Ensure the `api`, `notifications`, `frontend`, `gateway-service`, `locations`, `postgresql-0`, and `redis` pods are `Running/Ready`.
 3. **Deploy / update the Gateway stack**
    ```powershell
    kubectl apply -f infra/k8s/gatewayclass.yaml
    kubectl apply -f infra/k8s/gateway.yaml
    kubectl apply -f infra/k8s/api-route.yaml
    kubectl apply -f infra/k8s/notifications-route.yaml
+  kubectl apply -f infra/k8s/frontend-route.yaml
+  kubectl apply -f infra/k8s/gateway-service-route.yaml
    kubectl apply -f infra/k8s/contour-config.yaml
    kubectl rollout restart deployment contour -n projectcontour
    kubectl rollout status  deployment contour -n projectcontour
@@ -187,12 +195,14 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
    kubectl describe gateway sandbox-gateway -n sandbox-app
    kubectl get httproute api-route -n sandbox-app -o yaml
    kubectl get httproute notifications-route -n sandbox-app -o yaml
+  kubectl get httproute frontend-route -n sandbox-app -o yaml
+  kubectl get httproute gateway-service-route -n sandbox-app -o yaml
    ```
    `Accepted=True` and `Programmed=True` indicate the controller has attached listeners and routed the HTTPRoute(s).
 5. **Start the tunnel / expose Envoy**
    - Run `minikube tunnel` in a dedicated terminal (leave it running).
    - Check the external IP: `kubectl get svc -n projectcontour envoy` ⇒ typically `127.0.0.1` on Windows.
-   - Add both hosts to your hosts file: `127.0.0.1 sandbox.local` and `127.0.0.1 notify.sandbox.local`.
+  - Add all hosts to your hosts file: `127.0.0.1 sandbox.local`, `127.0.0.1 notify.sandbox.local`, `127.0.0.1 ui.sandbox.local`, and `127.0.0.1 api.photo.local`.
 6. **Smoke test HTTP endpoints**
    ```bash
    curl -H "Host: sandbox.local" http://127.0.0.1/health
@@ -202,6 +212,9 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
    curl -H "Host: notify.sandbox.local" http://127.0.0.1/send -X POST \
      -H "Content-Type: application/json" \
      -d '{"channel":"email","recipient":"dev@example.com","message":"hello from gateway"}'
+   curl -H "Host: ui.sandbox.local" http://127.0.0.1/
+  curl -H "Host: api.photo.local" http://127.0.0.1/healthz
+  curl -H "Host: api.photo.local" http://127.0.0.1/locations
    ```
    (All of the above run automatically via `make smoke-test` once the tunnel and hosts entries exist.)
    Or run the tests in-cluster:
@@ -210,6 +223,10 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
      curl -s -H "Host: sandbox.local" http://envoy.projectcontour.svc.cluster.local/health
    kubectl run notify-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
      curl -s -H "Host: notify.sandbox.local" http://envoy.projectcontour.svc.cluster.local/healthz
+  kubectl run ui-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
+    curl -s -H "Host: ui.sandbox.local" http://envoy.projectcontour.svc.cluster.local/
+  kubectl run locations-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
+    curl -s -H "Host: api.photo.local" http://envoy.projectcontour.svc.cluster.local/locations
    ```
    (`make smoke-test-cluster` wraps both of these in-cluster checks.)
 7. **Cleanup**
@@ -220,8 +237,8 @@ These steps belong in CI as well: after `kubectl apply`, run `kubectl wait --for
 
 ### Makefile reference
 
-- `make up` – Build the API + notifications images, load them into Minikube, and (re)apply all manifests (namespace, Deployments, Services, GatewayClass/Gateway/HTTPRoutes, and Contour config) before waiting for deployments to roll out.
-- `make smoke-test` – Run the local curl suite against `sandbox.local` and `notify.sandbox.local`. Requires `minikube tunnel` plus hosts file entries that point to `127.0.0.1` (override with `HOST_IP=x.x.x.x make smoke-test`).
+- `make up` – Build every service image (api, notifications, frontend, gateway, locations), load them into Minikube, and (re)apply all manifests (namespace, Deployments, Services, DB StatefulSets, GatewayClass/Gateway/HTTPRoutes, monitoring) before waiting for rollouts to finish.
+- `make smoke-test` – Run the local curl suite against `sandbox.local`, `notify.sandbox.local`, `ui.sandbox.local`, and `api.photo.local` (health + `/locations`). Requires `minikube tunnel` plus hosts file entries that point to `127.0.0.1` (override with `HOST_IP=x.x.x.x make smoke-test`).
 - `make smoke-test-cluster` – Launch ephemeral curl pods inside the cluster that hit the Envoy service directly; useful for CI or validating routing without touching the hosts file.
 - `make build`, `make load-images`, `make apply-app`, `make apply-gateway` – Component-level targets used by `make up` if you want to run individual phases (e.g., iterate on Deployments without rebuilding images).
 - `make apply-monitoring` – Apply only the Prometheus + Grafana manifests (`infra/k8s/prometheus.yaml`, `infra/k8s/grafana.yaml`) if you want to redeploy dashboards without rebuilding the app images.
@@ -229,6 +246,26 @@ These steps belong in CI as well: after `kubectl apply`, run `kubectl wait --for
 - `IMAGE_TAG` (default `v1`) and `REGISTRY` are opt-in variables understood by every build/deploy target. For example, `make up IMAGE_TAG=dev` keeps everything local, while `make up REGISTRY=ghcr.io/you IMAGE_TAG=dev` ensures Deployments reference `ghcr.io/you/api-service:dev` and Minikube receives that exact image name via `minikube image load`.
 
 > We validated the workflow end-to-end by stopping Minikube, starting it fresh, and running `make up` → all images reloaded, manifests re-applied, and rollouts completed without manual intervention.
+
+### Secrets & runtime config
+
+- **Kubernetes secrets live outside git.** Copy the sample manifests in `infra/k8s/secrets/` to `*.local.yaml`, customize the values, and let `make up` apply them automatically:
+  ```powershell
+  cp infra/k8s/secrets/frontend-secrets.sample.yaml infra/k8s/secrets/frontend-secrets.local.yaml
+  cp infra/k8s/secrets/db-secrets.sample.yaml infra/k8s/secrets/db-secrets.local.yaml
+  # edit both files with your Mapbox token, API hostname, Postgres creds, and Redis password
+  ```
+- **Frontend runtime config** (`services/frontend/entrypoint.sh`) renders a `config.js` file inside the Nginx container using the `frontend-secrets` values. That script injects `window.__APP_CONFIG__` at runtime so React never bakes secrets into the bundle.
+- **Database credentials + URLs** come from the `db-secrets` manifest. The same secret feeds the PostgreSQL StatefulSet, Redis deployment, and the locations-service deployment (which consumes `DATABASE_URL` + `REDIS_PASSWORD`).
+- If you prefer imperative creation instead of files, the README in `infra/k8s/secrets/` includes sample `kubectl create secret` commands.
+
+### Data + migrated APIs
+
+- `infra/k8s/db/postgres.yaml` provisions a single-node PostgreSQL 16 StatefulSet with a 1Gi PVC. `infra/k8s/db/redis.yaml` deploys password-protected Redis (Bitnami image) for lightweight caching.
+- `services/locations` (FastAPI + SQLModel) persists pins as JSONB rows and exposes `/locations` CRUD operations. It seeds/reads from Postgres and caches list responses in Redis.
+- `services/gateway` now fronts all browser traffic at `api.photo.local`. Requests under `/locations` are routed to the new locations-service; everything else continues to proxy to the legacy AWS API Gateway so the migration stays incremental.
+- `make smoke-test` includes new `api.photo.local` checks so CI/local runs confirm the gateway → locations → Postgres path is alive before coding further features.
+- Bring existing pins across by port-forwarding Postgres (`kubectl port-forward svc/postgresql -n sandbox-app 5432:5432`) and loading `tjprohammer-us/tjprohammer-us-app/lambda/pins.json` via `psql` or a temporary script—the schema stores each pin as a JSONB document, so inserting raw JSON is straightforward.
 
 ### Observability quickstart (Prometheus + Grafana)
 
@@ -345,3 +382,13 @@ This README evolves with the sandbox—update it as new components, environments
 ```
 
 ```
+
+
+After a reboot, you just repeat the infrastructure bootstrap:
+
+minikube start
+kubectl apply -f https://projectcontour.io/quickstart/contour-gateway.yaml
+kubectl rollout status deployment/contour -n projectcontour
+make up
+minikube tunnel (run from an elevated PowerShell)
+That sequence rebuilds any local image changes, reloads them into Minikube, reapplies the app/gateway manifests, and restarts the tunnel so ui.sandbox.local resolves again.
