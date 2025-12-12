@@ -1,0 +1,9 @@
+# Local secrets and environment overrides
+.env
+*.env.local
+*.env.development
+*.env.production
+services/frontend/photo-site/.env
+services/frontend/photo-site/.env.*
+infra/k8s/secrets/*.local.yaml
+infra/k8s/secrets/*.private.yaml
