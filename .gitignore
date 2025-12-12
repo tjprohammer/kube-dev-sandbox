@@ -7,3 +7,4 @@ services/frontend/photo-site/.env
 services/frontend/photo-site/.env.*
 infra/k8s/secrets/*.local.yaml
 infra/k8s/secrets/*.private.yaml
+tjprohammer-us/
