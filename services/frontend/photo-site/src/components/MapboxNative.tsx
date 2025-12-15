@@ -43,12 +43,16 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
   // Determine whether Mapbox can run in this environment
   useEffect(() => {
     if (!resolvedMapboxToken) {
-      setMapError("Mapbox access token is missing; set VITE_MAPBOX_ACCESS_TOKEN or runtime config.");
+      setMapError(
+        "Mapbox access token is missing; set VITE_MAPBOX_ACCESS_TOKEN or runtime config."
+      );
       return;
     }
 
     try {
-      const supported = mapboxgl.supported({ failIfMajorPerformanceCaveat: true });
+      const supported = mapboxgl.supported({
+        failIfMajorPerformanceCaveat: true,
+      });
       if (!supported) {
         setMapError(
           "This browser or VM cannot initialize WebGL. Enable hardware acceleration or switch to a WebGL-capable browser to view the interactive map."
@@ -143,7 +147,10 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
         projection: "mercator", // Good for regional maps
       });
     } catch (error) {
-      console.error("Mapbox failed to initialize even though support check passed:", error);
+      console.error(
+        "Mapbox failed to initialize even though support check passed:",
+        error
+      );
       setMapError(
         "WebGL initialization failed. Ensure hardware acceleration is enabled and reload the page to try again."
       );
@@ -526,8 +533,8 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
               {mapError}
             </Text>
             <Text size="xs" c={theme.colors.sage[4]} ta="center">
-              Pins still load from the API ({pins.length} locations), but a WebGL-capable browser is required to
-              visualize them on the map.
+              Pins still load from the API ({pins.length} locations), but a
+              WebGL-capable browser is required to visualize them on the map.
             </Text>
           </Paper>
         ) : isLoading ? (

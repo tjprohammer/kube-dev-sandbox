@@ -7,8 +7,8 @@ Some application settings (Mapbox tokens, API hostnames, database credentials, e
 3. Replace the placeholder values with your real Mapbox token, PostgreSQL credentials, and Redis password.
 4. Apply the rendered secrets before (or as part of) `make up`:
    ```powershell
-  kubectl apply -f infra/k8s/secrets/frontend-secrets.local.yaml
-  kubectl apply -f infra/k8s/secrets/db-secrets.local.yaml
+   kubectl apply -f infra/k8s/secrets/frontend-secrets.local.yaml
+   kubectl apply -f infra/k8s/secrets/db-secrets.local.yaml
    ```
 
 The Makefile automatically looks for `frontend-secrets.local.yaml` and applies it when present. If you prefer kubectl imperatively, run:

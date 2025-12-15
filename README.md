@@ -185,23 +185,23 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
    kubectl apply -f services/api/k8s/service.yaml
    kubectl apply -f services/notifications/k8s/deployment.yaml
    kubectl apply -f services/notifications/k8s/service.yaml
-  kubectl apply -f services/frontend/k8s/deployment.yaml
-  kubectl apply -f services/frontend/k8s/service.yaml
-  kubectl apply -f services/gateway/k8s/deployment.yaml
-  kubectl apply -f services/gateway/k8s/service.yaml
-  kubectl apply -f services/locations/k8s/deployment.yaml
-  kubectl apply -f services/locations/k8s/service.yaml
+   kubectl apply -f services/frontend/k8s/deployment.yaml
+   kubectl apply -f services/frontend/k8s/service.yaml
+   kubectl apply -f services/gateway/k8s/deployment.yaml
+   kubectl apply -f services/gateway/k8s/service.yaml
+   kubectl apply -f services/locations/k8s/deployment.yaml
+   kubectl apply -f services/locations/k8s/service.yaml
    kubectl get pods -n sandbox-app
    ```
-  Ensure the `api`, `notifications`, `frontend`, `gateway-service`, `locations`, `postgresql-0`, and `redis` pods are `Running/Ready`.
+   Ensure the `api`, `notifications`, `frontend`, `gateway-service`, `locations`, `postgresql-0`, and `redis` pods are `Running/Ready`.
 3. **Deploy / update the Gateway stack**
    ```powershell
    kubectl apply -f infra/k8s/gatewayclass.yaml
    kubectl apply -f infra/k8s/gateway.yaml
    kubectl apply -f infra/k8s/api-route.yaml
    kubectl apply -f infra/k8s/notifications-route.yaml
-  kubectl apply -f infra/k8s/frontend-route.yaml
-  kubectl apply -f infra/k8s/gateway-service-route.yaml
+   kubectl apply -f infra/k8s/frontend-route.yaml
+   kubectl apply -f infra/k8s/gateway-service-route.yaml
    kubectl apply -f infra/k8s/contour-config.yaml
    kubectl rollout restart deployment contour -n projectcontour
    kubectl rollout status  deployment contour -n projectcontour
@@ -212,14 +212,16 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
    kubectl describe gateway sandbox-gateway -n sandbox-app
    kubectl get httproute api-route -n sandbox-app -o yaml
    kubectl get httproute notifications-route -n sandbox-app -o yaml
-  kubectl get httproute frontend-route -n sandbox-app -o yaml
-  kubectl get httproute gateway-service-route -n sandbox-app -o yaml
+   kubectl get httproute frontend-route -n sandbox-app -o yaml
+   kubectl get httproute gateway-service-route -n sandbox-app -o yaml
    ```
    `Accepted=True` and `Programmed=True` indicate the controller has attached listeners and routed the HTTPRoute(s).
 5. **Start the tunnel / expose Envoy**
    - Run `minikube tunnel` in a dedicated terminal (leave it running).
    - Check the external IP: `kubectl get svc -n projectcontour envoy` ⇒ typically `127.0.0.1` on Windows.
-  - Add all hosts to your hosts file: `127.0.0.1 sandbox.local`, `127.0.0.1 notify.sandbox.local`, `127.0.0.1 ui.sandbox.local`, and `127.0.0.1 api.photo.local`.
+
+- Add all hosts to your hosts file: `127.0.0.1 sandbox.local`, `127.0.0.1 notify.sandbox.local`, `127.0.0.1 ui.sandbox.local`, and `127.0.0.1 api.photo.local`.
+
 6. **Smoke test HTTP endpoints**
    ```bash
    curl -H "Host: sandbox.local" http://127.0.0.1/health
@@ -230,8 +232,8 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
      -H "Content-Type: application/json" \
      -d '{"channel":"email","recipient":"dev@example.com","message":"hello from gateway"}'
    curl -H "Host: ui.sandbox.local" http://127.0.0.1/
-  curl -H "Host: api.photo.local" http://127.0.0.1/healthz
-  curl -H "Host: api.photo.local" http://127.0.0.1/locations
+   curl -H "Host: api.photo.local" http://127.0.0.1/healthz
+   curl -H "Host: api.photo.local" http://127.0.0.1/locations
    ```
    (All of the above run automatically via `make smoke-test` once the tunnel and hosts entries exist.)
    Or run the tests in-cluster:
@@ -240,9 +242,9 @@ Follow these steps to expose any namespace-scoped HTTP service through the Conto
      curl -s -H "Host: sandbox.local" http://envoy.projectcontour.svc.cluster.local/health
    kubectl run notify-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
      curl -s -H "Host: notify.sandbox.local" http://envoy.projectcontour.svc.cluster.local/healthz
-  kubectl run ui-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
+   kubectl run ui-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
     curl -s -H "Host: ui.sandbox.local" http://envoy.projectcontour.svc.cluster.local/
-  kubectl run locations-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
+   kubectl run locations-test --rm -i --tty --image=curlimages/curl --restart=Never -- \
     curl -s -H "Host: api.photo.local" http://envoy.projectcontour.svc.cluster.local/locations
    ```
    (`make smoke-test-cluster` wraps both of these in-cluster checks.)
@@ -288,10 +290,12 @@ These steps belong in CI as well: after `kubectl apply`, run `kubectl wait --for
 
 1. Deploy or refresh the monitoring stack via `make up` (includes `apply-monitoring`) or run `make apply-monitoring` explicitly.
 2. Prometheus scrapes every HTTP service exposing `/metrics` (api, notifications, gateway-service, locations) plus Envoy (`/stats/prometheus`) and the Postgres exporter we deploy alongside the database. Metrics of interest:
-  - `gateway_proxy_requests_total{upstream="locations"|"legacy", outcome="success"|"failure"}` for proxy success tracking.
-  - `locations_requests_total`, `api_requests_total`, etc., from the FastAPI instrumentors.
-  - `envoy_http_downstream_cx_active`, `envoy_cluster_upstream_rq` from the Envoy metrics job.
-  - `pg_stat_activity_count` and friends from the Postgres exporter (port 9187).
+
+- `gateway_proxy_requests_total{upstream="locations"|"legacy", outcome="success"|"failure"}` for proxy success tracking.
+- `locations_requests_total`, `api_requests_total`, etc., from the FastAPI instrumentors.
+- `envoy_http_downstream_cx_active`, `envoy_cluster_upstream_rq` from the Envoy metrics job.
+- `pg_stat_activity_count` and friends from the Postgres exporter (port 9187).
+
 3. Port-forward the services when you want to inspect them locally or embed them in dashboards:
 
 ```powershell
@@ -407,7 +411,6 @@ This README evolves with the sandbox—update it as new components, environments
 ```
 
 ```
-
 
 After a reboot, you just repeat the infrastructure bootstrap:
 

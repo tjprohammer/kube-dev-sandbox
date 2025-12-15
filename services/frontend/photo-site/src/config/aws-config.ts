@@ -68,7 +68,6 @@ const defaultMapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
 export const ENV_CONFIG = {
   isDevelopment,
   isProduction,
-  apiBaseUrl:
-    getApiBaseUrl(defaultApiBaseUrl) || AWS_CONFIG.apiGateway.baseUrl,
+  apiBaseUrl: getApiBaseUrl(defaultApiBaseUrl) || AWS_CONFIG.apiGateway.baseUrl,
   mapboxToken: getMapboxToken(defaultMapboxToken),
 };

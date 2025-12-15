@@ -110,11 +110,13 @@ The project is designed as multiple services running in Kubernetes.
 ### Services
 
 - `frontend-web`
+
   - React (or other) SPA that renders the map, galleries, and pages.
   - Communicates exclusively with backend APIs.
   - Exposed via Ingress or Gateway.
 
 - `locations-service`
+
   - CRUD for pins/locations:
     - Coordinates, titles, tags, regions
     - Links to photo assets (e.g., S3)
@@ -122,18 +124,21 @@ The project is designed as multiple services running in Kubernetes.
   - Backed by Postgres (optionally PostGIS for geo queries).
 
 - `trips-service`
+
   - Manages Trips and Themes:
     - Definitions of trips (ordered lists of locations).
     - Trip metadata (duration, difficulty, seasonality).
   - Calls `ai-writer-service` to generate or update stories.
 
 - `ai-writer-service`
+
   - Wraps a Large Language Model provider (e.g., OpenAI) to:
     - Generate location descriptions.
     - Generate trip narratives and “If you go…” guidance.
   - Stateless service with rate limiting and metrics.
 
 - `conditions-service`
+
   - Integrates with external APIs:
     - Weather (current + forecast).
     - Sun/sunrise/sunset, golden hour times.
@@ -141,6 +146,7 @@ The project is designed as multiple services running in Kubernetes.
   - Caches responses in Redis.
 
 - `planner-service`
+
   - Uses `locations-service` + `conditions-service` to:
     - Determine “best time to shoot” for a given date/location.
     - Create simple 1–3 day itineraries.
@@ -153,6 +159,7 @@ The project is designed as multiple services running in Kubernetes.
 ### Shared Infrastructure
 
 - **Postgres**
+
   - StatefulSet with PersistentVolumeClaim.
   - Stores:
     - Locations
@@ -160,11 +167,13 @@ The project is designed as multiple services running in Kubernetes.
     - (Optionally) requests, users, or other structured data.
 
 - **Redis**
+
   - Used mainly for caching:
     - Weather/sun API responses.
     - Frequently requested planner/trip data.
 
 - **Ingress / Gateway**
+
   - Typical routing example:
     - `https://photo.local/` → `frontend-web`
     - `https://api.photo.local/locations` → `locations-service`
@@ -183,13 +192,16 @@ The project is designed as multiple services running in Kubernetes.
 ## Tech Stack
 
 - **Frontend**
+
   - React (Mapbox for maps, existing UI from `photo.tjprohammer.us`)
 
 - **Backend Services**
+
   - Language and frameworks are flexible (e.g., Go, Node.js, or Python).  
     Choice can be made per service, as long as they expose HTTP APIs.
 
 - **Datastores**
+
   - Postgres (possibly with PostGIS)
   - Redis for caching
 
@@ -273,3 +285,4 @@ Frontend reorg only when needed: once you have multiple backend services, decide
 Codify contracts: as you move logic off Lambda, define OpenAPI specs or TypeScript types for each service. That makes it easier to share SDKs between the frontend and future mobile clients.
 
 Leverage existing code: even if Lambda handlers need rework, you can often lift their core logic into the new services. Wrap it in a proper service, add tests, and you avoid rewriting the business rules.
+```
