@@ -83,6 +83,7 @@ apply-gateway:
 	kubectl apply -f infra/k8s/frontend-route.yaml
 	kubectl apply -f infra/k8s/gateway-service-route.yaml
 	kubectl apply -f infra/k8s/contour-config.yaml
+	kubectl apply -f infra/k8s/envoy-metrics.yaml
 
 apply-monitoring:
 	kubectl apply -f infra/k8s/prometheus.yaml

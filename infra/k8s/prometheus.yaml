@@ -69,6 +69,25 @@ items:
                   - api.sandbox-app.svc.cluster.local:8000
                   - notifications.sandbox-app.svc.cluster.local:8100
             metrics_path: /metrics
+          - job_name: "gateway-service"
+            static_configs:
+              - targets:
+                  - gateway-service.sandbox-app.svc.cluster.local:8080
+            metrics_path: /metrics
+          - job_name: "locations-service"
+            static_configs:
+              - targets:
+                  - locations.sandbox-app.svc.cluster.local:9000
+            metrics_path: /metrics
+          - job_name: "envoy"
+            metrics_path: /stats/prometheus
+            static_configs:
+              - targets:
+                  - envoy-metrics.projectcontour.svc.cluster.local:8002
+          - job_name: "postgresql"
+            static_configs:
+              - targets:
+                  - postgres-exporter.sandbox-app.svc.cluster.local:9187
   - apiVersion: apps/v1
     kind: Deployment
     metadata:

@@ -24,7 +24,7 @@ kubectl create secret generic db-secrets \
   --from-literal=POSTGRES_USER=<user> \
   --from-literal=POSTGRES_PASSWORD=<pass> \
   --from-literal=POSTGRES_DB=locations \
-  --from-literal=DATABASE_URL=postgresql+psycopg2://<user>:<pass>@postgresql.sandbox-app.svc.cluster.local:5432/locations \
+  --from-literal=DATABASE_URL=postgresql+psycopg://<user>:<pass>@postgresql.sandbox-app.svc.cluster.local:5432/locations \
   --from-literal=REDIS_PASSWORD=<redis-pass>
 ```
 

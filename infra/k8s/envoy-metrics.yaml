@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: envoy-metrics
+  namespace: projectcontour
+  labels:
+    app: envoy
+spec:
+  selector:
+    app: envoy
+  ports:
+    - name: metrics
+      port: 8002
+      targetPort: 8002
+  type: ClusterIP

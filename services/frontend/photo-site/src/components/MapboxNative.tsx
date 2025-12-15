@@ -37,6 +37,38 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredPin, setHoveredPin] = useState<LocationPin | null>(null);
   const [showAnimation, setShowAnimation] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+
+  // Determine whether Mapbox can run in this environment
+  useEffect(() => {
+    if (!resolvedMapboxToken) {
+      setMapError("Mapbox access token is missing; set VITE_MAPBOX_ACCESS_TOKEN or runtime config.");
+      return;
+    }
+
+    try {
+      const supported = mapboxgl.supported({ failIfMajorPerformanceCaveat: true });
+      if (!supported) {
+        setMapError(
+          "This browser or VM cannot initialize WebGL. Enable hardware acceleration or switch to a WebGL-capable browser to view the interactive map."
+        );
+        return;
+      }
+
+      setMapError(null);
+      setMapReady(true);
+    } catch (error) {
+      console.error("Mapbox capability check failed:", error);
+      setMapError("Unable to verify WebGL support in this environment.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mapError) {
+      setShowAnimation(false);
+    }
+  }, [mapError]);
 
   // Load pins from data service
   useEffect(() => {
@@ -97,18 +129,27 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
   );
 
   useEffect(() => {
-    if (map.current) return; // Initialize map only once
+    if (map.current || !mapReady || mapError) return; // Initialize only when ready
 
     if (!mapContainer.current) return;
 
-    // Initialize the map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/satellite-streets-v12", // Satellite imagery WITH built-in labels
-      center: [-106.3468, 40.7772], // Center of North America (roughly Montana/Saskatchewan border)
-      zoom: 3.9, // Zoom level to show most of North America
-      projection: "mercator", // Good for regional maps
-    });
+    try {
+      // Initialize the map; failures (e.g., driver blocks WebGL) fall into catch
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: "mapbox://styles/mapbox/satellite-streets-v12", // Satellite imagery WITH built-in labels
+        center: [-106.3468, 40.7772], // Center of North America (roughly Montana/Saskatchewan border)
+        zoom: 3.9, // Zoom level to show most of North America
+        projection: "mercator", // Good for regional maps
+      });
+    } catch (error) {
+      console.error("Mapbox failed to initialize even though support check passed:", error);
+      setMapError(
+        "WebGL initialization failed. Ensure hardware acceleration is enabled and reload the page to try again."
+      );
+      setMapReady(false);
+      return;
+    }
 
     // Add navigation control
     map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
@@ -447,7 +488,7 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
         map.current = null;
       }
     };
-  }, [handleLocationClick, getPinColor, pins]);
+  }, [handleLocationClick, getPinColor, pins, mapReady, mapError]);
 
   return (
     <Box style={{ height: "100vh", backgroundColor: theme.colors.brown[9] }}>
@@ -463,7 +504,33 @@ export default function MapboxNative({ onLocationSelect }: MapComponentProps) {
           position: "relative",
         }}
       >
-        {isLoading ? (
+        {mapError ? (
+          <Paper
+            p="xl"
+            radius="lg"
+            style={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 16,
+              backgroundColor: "rgba(0,0,0,0.85)",
+              border: `1px solid ${theme.colors.sage[6]}`,
+            }}
+          >
+            <Text size="lg" fw={700} c={theme.colors.sage[1]}>
+              Map unavailable
+            </Text>
+            <Text size="sm" c={theme.colors.sage[3]} ta="center">
+              {mapError}
+            </Text>
+            <Text size="xs" c={theme.colors.sage[4]} ta="center">
+              Pins still load from the API ({pins.length} locations), but a WebGL-capable browser is required to
+              visualize them on the map.
+            </Text>
+          </Paper>
+        ) : isLoading ? (
           <Box
             style={{
               height: "100%",

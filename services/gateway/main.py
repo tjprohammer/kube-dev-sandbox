@@ -7,6 +7,8 @@ from typing import Dict, Iterable, Optional
 import httpx
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import Counter
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = logging.getLogger("gateway-service")
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
@@ -51,8 +53,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 _client: Optional[httpx.AsyncClient] = None
+
+PROXY_REQUESTS = Counter(
+    "gateway_proxy_requests_total",
+    "Total number of proxied requests grouped by upstream and outcome",
+    ("upstream", "outcome"),
+)
 
 
 def _strip_trailing_slash(value: str) -> str:
@@ -77,6 +86,14 @@ def _copy_headers(source: Iterable[tuple[str, str]]) -> Dict[str, str]:
     return result
 
 
+def _upstream_label(target_base: str) -> str:
+    if target_base == LOCATIONS_BASE_URL:
+        return "locations"
+    if target_base == LEGACY_BASE_URL:
+        return "legacy"
+    return "custom"
+
+
 async def _proxy_request(request: Request, target_base: str) -> Response:
     if not target_base:
         return Response(status_code=502, content="Missing upstream configuration")
@@ -91,16 +108,28 @@ async def _proxy_request(request: Request, target_base: str) -> Response:
     headers["x-forwarded-proto"] = request.url.scheme
 
     logger.debug("Proxying %s %s -> %s", request.method, request.url.path, target_url)
+    upstream_name = _upstream_label(target_base)
 
     method = request.method.upper()
-    upstream_response = await _client.request(
-        method,
-        target_url,
-        content=body if method not in {"GET", "HEAD"} else None,
-        headers=headers,
-    )
+    try:
+        upstream_response = await _client.request(
+            method,
+            target_url,
+            content=body if method not in {"GET", "HEAD"} else None,
+            headers=headers,
+        )
+    except httpx.HTTPError as exc:
+        PROXY_REQUESTS.labels(upstream_name, "failure").inc()
+        logger.error("Upstream request failed for %s: %s", upstream_name, exc)
+        return Response(
+            content="Upstream request failed",
+            status_code=502,
+            headers={"content-type": "text/plain; charset=utf-8"},
+        )
 
     response_headers = _copy_headers(upstream_response.headers.multi_items())
+    outcome = "success" if upstream_response.status_code < 500 else "failure"
+    PROXY_REQUESTS.labels(upstream_name, outcome).inc()
 
     return Response(
         content=upstream_response.content,

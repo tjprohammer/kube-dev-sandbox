@@ -147,6 +147,23 @@ kube-dev-sandbox/
 
 ## 3. Upcoming Enhancements / To-Dos
 
+### Bootstrap Script (local PowerShell)
+
+Run `./scripts/bootstrap.ps1` after a reboot to rebuild and hydrate the cluster in one shot. The script:
+
+- Verifies `minikube`, `kubectl`, `make`, `aws`, and Python are available, then starts Minikube if necessary.
+- Applies the Contour Gateway quickstart manifest and runs `make up` (pass `-SkipBuild` to reuse existing images).
+- Prompts you to open an elevated `minikube tunnel`, starts a background Postgres port-forward job, and runs the S3 → Postgres migration via `services/locations/migrate_from_s3.py --profile tjprohammer --region us-west-2 --truncate` (disable with `-SkipMigration`).
+- Leaves the Postgres port-forward running as job `bootstrap-postgres`; stop it with `Stop-Job -Name bootstrap-postgres` when finished.
+
+Example usage:
+
+```powershell
+./scripts/bootstrap.ps1                    # full rebuild + migration
+./scripts/bootstrap.ps1 -SkipBuild        # reuse previously built images
+./scripts/bootstrap.ps1 -SkipMigration    # keep existing Postgres data
+```
+
 ### Gateway API quickstart (local)
 
 Follow these steps to expose any namespace-scoped HTTP service through the Contour + Envoy Gateway stack:
@@ -265,23 +282,31 @@ These steps belong in CI as well: after `kubectl apply`, run `kubectl wait --for
 - `services/locations` (FastAPI + SQLModel) persists pins as JSONB rows and exposes `/locations` CRUD operations. It seeds/reads from Postgres and caches list responses in Redis.
 - `services/gateway` now fronts all browser traffic at `api.photo.local`. Requests under `/locations` are routed to the new locations-service; everything else continues to proxy to the legacy AWS API Gateway so the migration stays incremental.
 - `make smoke-test` includes new `api.photo.local` checks so CI/local runs confirm the gateway → locations → Postgres path is alive before coding further features.
-- Bring existing pins across by port-forwarding Postgres (`kubectl port-forward svc/postgresql -n sandbox-app 5432:5432`) and loading `tjprohammer-us/tjprohammer-us-app/lambda/pins.json` via `psql` or a temporary script—the schema stores each pin as a JSONB document, so inserting raw JSON is straightforward.
+- Bring existing pins across with the helper script after port-forwarding Postgres (`kubectl port-forward svc/postgresql -n sandbox-app 5432:5432`). Run `python services/locations/migrate_from_s3.py --region us-west-2 --profile <aws-profile> --truncate` to download `data/pins.json` from the photography S3 bucket and upsert every entry into the `location_pins` table. Pass `--file path/to/pins.json` for offline imports and `--dry-run` if you want to validate the payload without committing.
 
 ### Observability quickstart (Prometheus + Grafana)
 
 1. Deploy or refresh the monitoring stack via `make up` (includes `apply-monitoring`) or run `make apply-monitoring` explicitly.
-2. Port-forward the services when you want to inspect them locally:
+2. Prometheus scrapes every HTTP service exposing `/metrics` (api, notifications, gateway-service, locations) plus Envoy (`/stats/prometheus`) and the Postgres exporter we deploy alongside the database. Metrics of interest:
+  - `gateway_proxy_requests_total{upstream="locations"|"legacy", outcome="success"|"failure"}` for proxy success tracking.
+  - `locations_requests_total`, `api_requests_total`, etc., from the FastAPI instrumentors.
+  - `envoy_http_downstream_cx_active`, `envoy_cluster_upstream_rq` from the Envoy metrics job.
+  - `pg_stat_activity_count` and friends from the Postgres exporter (port 9187).
+3. Port-forward the services when you want to inspect them locally or embed them in dashboards:
 
 ```powershell
 kubectl port-forward svc/prometheus-server -n sandbox-app 9090:80
 kubectl port-forward svc/grafana -n sandbox-app 3000:80
 ```
 
-Grafana credentials live in `infra/k8s/grafana.yaml` (`admin` / `dev-password`). 3. Visit `http://localhost:3000`, open the **Sandbox Traffic** dashboard, and watch:
+Grafana credentials live in `infra/k8s/grafana.yaml` (`admin` / `dev-password`). Visit `http://localhost:3000`, import (or create) dashboards that plot:
 
 - `api_requests_total` – custom counter incremented by each FastAPI handler.
 - `notifications_sent_total{channel="email"|"sms"|"push"}` – derived from the notifications service.
-- Default latency/error metrics from `prometheus-fastapi-instrumentator` under `/metrics` on every service.
+- Default latency/error metrics from `prometheus-fastapi-instrumentator` under `/metrics` on every internal service.
+- `gateway_proxy_requests_total` – confirms how many requests were routed to the legacy Lambda stack vs. the new locations-service and whether any failed upstream.
+- `envoy_http_downstream_cx_active` – connection count on the Envoy data plane.
+- `pg_up`, `pg_stat_database_xact_commit` – connection-level visibility into Postgres via the exporter.
 
 4. Prometheus is available at `http://localhost:9090` for ad-hoc queries; try `notifications_sent_total` or `rate(api_requests_total[5m])` to validate scraping.
 

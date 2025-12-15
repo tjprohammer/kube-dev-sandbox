@@ -10,12 +10,13 @@ from typing import Dict, List, Optional
 import redis.asyncio as redis
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, ConfigDict, Field
 from sqlmodel import Column, Field as SQLField, Session, SQLModel, create_engine, select
 from sqlalchemy.dialects.postgresql import JSONB
 
 DEFAULT_DB_URL = (
-    "postgresql+psycopg2://devuser:devpassword@postgresql.sandbox-app.svc.cluster.local:5432/locations"
+    "postgresql+psycopg://devuser:devpassword@postgresql.sandbox-app.svc.cluster.local:5432/locations"
 )
 DATABASE_URL = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
 
@@ -161,6 +162,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 
 @app.on_event("startup")

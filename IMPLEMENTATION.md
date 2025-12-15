@@ -248,6 +248,18 @@ Documentation
 
 Promote IMPLEMENTATION.md content into docs/architecture.md inside this repo so contributors (future you) can follow the roadmap. Keep README.md high-level and point to docs for details.
 
+### Bootstrap automation
+
+- Added `scripts/bootstrap.ps1` as the canonical "spin everything up" entry point. It checks for the required tooling, starts Minikube, reapplies the Contour quickstart, runs `make up`, prompts for an elevated `minikube tunnel`, backgrounds a Postgres port-forward job, and replays the S3 → Postgres migration with the `tjprohammer` AWS profile. Pass `-SkipBuild` or `-SkipMigration` to shorten the loop.
+- The script intentionally uses stock Make targets so CI and local workflows stay aligned.
+- Background jobs are surfaced via `Get-Job` so the user can tear them down with `Stop-Job -Name bootstrap-postgres` after testing.
+
+### Observability wiring
+
+- All FastAPI services (api, notifications, gateway-service, locations) now expose `/metrics` via `prometheus-fastapi-instrumentator`. Gateway publishes a custom `gateway_proxy_requests_total{upstream, outcome}` counter to quantify migration progress and failure modes.
+- Prometheus is configured to scrape those endpoints along with the Envoy daemonset (`/stats/prometheus` surfaced through the new `envoy-metrics` Service) and a lightweight Postgres exporter Deployment (port 9187) so DB connections and locks are trackable.
+- Grafana/Prometheus port-forward instructions live in README.md; dashboards should at minimum chart API volume, gateway success ratios, Envoy connection pressure, and Postgres `pg_up` to highlight infrastructure regressions as features land.
+
 A few guiding thoughts so it stays manageable:
 
 Incremental carve-out: don’t rewrite everything at once. Start by porting the existing frontend into services/frontend-web as-is, deploy it in Kubernetes, and keep its APIs pointing to the current Lambda endpoints. That gives you a baseline “frontend running in-cluster” while you design replacements for the Lambdas.
